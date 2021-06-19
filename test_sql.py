@@ -9,6 +9,9 @@ def db():
     if os.path.exists("db.sqlite"):
         os.unlink("db.sqlite")
     f = sqlite3.connect("db.sqlite")
+    c = f.cursor()
+    c.execute("PRAGMA foreign_keys = ON;")
+    c.close()
     return f
 
 def run_query(dbconn, statement):
@@ -30,7 +33,7 @@ def test_create_and_insert(db):
     cur.close()
 
     items = run_query(db, "select name from publisher")
-    assert set (x[0] for x in items) == set(["PHI","Harper","GCP","Atomic Habits","Del Rey","Vintage"]), "Publisher mismatch"
+    assert set (x[0] for x in items) == set(["PHI","Harper","GCP","Avery","Del Rey","Vintage"]), "Publisher mismatch"
 
     items = run_query(db, "select title from books")
     assert set(x[0] for x in items) == set(["The C Programming Language","The Go Programming Language","The UNIX Programming Environment","Cryptonomicon","Deep Work","Atomic Habits","The City and The City","The Great War for Civilisation"]), "Book titles mismatch"
@@ -77,7 +80,7 @@ def test_run_update1(db):
     cur.close()
 
     items = run_query(db, "select name from publisher")
-    assert set (x[0] for x in items) == set(["Prentice Hall","Harper","GCP","Atomic Habits","Del Rey","Vintage"]), "Publisher mismatch"
+    assert set (x[0] for x in items) == set(["Prentice Hall","Harper","GCP","Avery","Del Rey","Vintage"]), "Publisher mismatch"
     
 def test_run_delete(db):
     cur = db.cursor()
@@ -85,11 +88,9 @@ def test_run_delete(db):
         cur.executescript(f.read())
     cur.close()
 
-    items = run_query(db, "select s.name from books b, subjects s, books_subjects bs where b.id = bs.book and s.id = bs.subject and b.title = 'The Great War for Civilisation'");
+    items = run_query(db, "select s.name from books b, subjects s, books_subjects bs where b.id = bs.book and s.id = bs.subject and b.title = 'The Great War for Civilisation'")
     expected = set(["Politics"])
     assert set(x[0] for x in items) == expected
 
     items = run_query(db, "select name from subjects")  
     assert set(x[0] for x in items) == set(["C","UNIX","Technology","Science Fiction","Productivity","Psychology","Politics","Go"]), "Subjects mismatch"
-
-    
